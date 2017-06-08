@@ -5,6 +5,6 @@ authors = ["Jacob Haslehurst <jacob@haslehurst.net>"]
 
 [dependencies]
 reqwest = "0.6"
-serde_json = "1"
-serde = "1"
-serde_derive = "1"
+serde_json = "1.0"
+serde = "1.0"
+serde_derive = "1.0"
