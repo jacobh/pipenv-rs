@@ -9,3 +9,9 @@ subcommands:
             - PACKAGE_NAME:
                 required: true
                 help: Name of package to look up
+    - pipfile-info:
+        about: Displays info about a pipfile
+        args:
+            - PIPFILE_PATH:
+                required: true
+                help: path to pipfile

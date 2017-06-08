@@ -6,6 +6,10 @@ extern crate clap;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
+extern crate toml;
+
+use std::fs::File;
+use std::io::Read;
 
 mod package;
 
@@ -29,6 +33,21 @@ fn main() {
         let package_data = get_package_data(&client, &package_name);
         println!("{:?}", package_data);
     }
+    if let Some(matches) = matches.subcommand_matches("pipfile-info") {
+        let mut pipfile_bytes = vec![];
+        {
+            let mut pipfile_file = File::open(matches.value_of("PIPFILE_PATH").unwrap()).expect("Pipfile path does not point to file");
+            pipfile_file
+                .read_to_end(&mut pipfile_bytes)
+                .expect("failed to read Pipfile");
+        }
 
+        let pipfile_data: toml::Value =
+            toml::from_slice(&pipfile_bytes).expect("failed to parse Pipfile");
+
+        for (package_name, package_attrs) in pipfile_data["packages"].as_table().unwrap() {
+            println!("{}", package_name);
+        }
+    }
 
 }
