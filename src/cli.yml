@@ -1,0 +1,11 @@
+name: pipenv
+version: "0.1"
+author: Jacob Haslehurst <jacob@haslehurst.net>
+about: pipenv, in Rust
+subcommands:
+    - info:
+        about: Displays info about a package
+        args:
+            - PACKAGE_NAME:
+                required: true
+                help: Name of package to look up
