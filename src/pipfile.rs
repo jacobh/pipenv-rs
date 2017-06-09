@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use serde_json;
 
 #[derive(Deserialize, Debug)]
 pub struct Pipfile {
@@ -31,5 +31,12 @@ pub enum PackageInfo {
 
 fn package_info_git_editable_default() -> bool {
     false
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Lockfile {
+    default: HashMap<String, serde_json::Value>,
+    develop: HashMap<String, serde_json::Value>,
+    _meta: HashMap<String, serde_json::Value>,
 }
 

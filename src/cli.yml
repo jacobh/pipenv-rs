@@ -15,3 +15,9 @@ subcommands:
             - PIPFILE_PATH:
                 required: true
                 help: path to pipfile
+    - validate-lockfile:
+        about: Validate format of lockfile
+        args:
+            - LOCKFILE_PATH:
+                required: true
+                help: path to pipfile.lock

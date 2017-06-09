@@ -52,5 +52,12 @@ fn main() {
             let _ = get_package_data(&client, &package_name).unwrap();
         }
     }
+    if let Some(matches) = matches.subcommand_matches("validate-lockfile") {
+        let lockfile_bytes = get_file_path_bytes(matches.value_of("LOCKFILE_PATH").unwrap())
+            .unwrap();
+        let lockfile: pipfile::Lockfile = serde_json::from_slice(&lockfile_bytes)
+            .expect("failed to parse Pipfile.lock");
+        println!("ok");
+    }
 }
 
