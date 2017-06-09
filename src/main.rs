@@ -46,7 +46,8 @@ fn main() {
         let pipfile_data: toml::Value = toml::from_slice(&pipfile_bytes)
             .expect("failed to parse Pipfile");
 
-        for (package_name, package_attrs) in pipfile_data["packages"].as_table().unwrap() {
+        for (package_name, _) in pipfile_data["packages"].as_table().unwrap() {
+            let _ = get_package_data(&client, &package_name);
             println!("{}", package_name);
         }
     }
