@@ -11,6 +11,7 @@ extern crate toml;
 use std::fs::File;
 use std::io::Read;
 
+mod pipfile;
 mod pypi;
 
 fn get_package_data(client: &reqwest::Client,
@@ -43,14 +44,13 @@ fn main() {
                 .expect("failed to read Pipfile");
         }
 
-        let pipfile_data: toml::Value = toml::from_slice(&pipfile_bytes)
+        let pipfile_inst: pipfile::Pipfile = toml::from_slice(&pipfile_bytes)
             .expect("failed to parse Pipfile");
 
-        for (package_name, _) in pipfile_data["packages"].as_table().unwrap() {
+        for (package_name, _) in pipfile_inst.packages {
             println!("{}", package_name);
             let _ = get_package_data(&client, &package_name).unwrap();
         }
     }
-
 }
 
