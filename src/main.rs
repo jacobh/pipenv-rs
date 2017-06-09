@@ -24,6 +24,13 @@ fn get_package_data(client: &reqwest::Client,
     Ok(resp.json()?)
 }
 
+fn get_file_path_bytes(path: &str) -> std::io::Result<Vec<u8>> {
+    let mut bytes = vec![];
+    let mut file = File::open(path)?;
+    file.read_to_end(&mut bytes)?;
+    Ok(bytes)
+}
+
 fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = clap::App::from_yaml(yaml).get_matches();
@@ -35,14 +42,7 @@ fn main() {
         println!("{:?}", package_data);
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
-        let mut pipfile_bytes = vec![];
-        {
-            let mut pipfile_file = File::open(matches.value_of("PIPFILE_PATH").unwrap())
-                .expect("Pipfile path does not point to file");
-            pipfile_file
-                .read_to_end(&mut pipfile_bytes)
-                .expect("failed to read Pipfile");
-        }
+        let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap()).unwrap();
 
         let pipfile_inst: pipfile::Pipfile = toml::from_slice(&pipfile_bytes)
             .expect("failed to parse Pipfile");
