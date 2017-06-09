@@ -11,11 +11,11 @@ extern crate toml;
 use std::fs::File;
 use std::io::Read;
 
-mod package;
+mod pypi;
 
 fn get_package_data(client: &reqwest::Client,
                     package_name: &str)
-                    -> reqwest::Result<package::Package> {
+                    -> reqwest::Result<pypi::PypiPackage> {
 
     let mut resp = client
         .get(&format!("https://pypi.python.org/pypi/{}/json", package_name))
@@ -47,8 +47,8 @@ fn main() {
             .expect("failed to parse Pipfile");
 
         for (package_name, _) in pipfile_data["packages"].as_table().unwrap() {
-            let _ = get_package_data(&client, &package_name);
             println!("{}", package_name);
+            let _ = get_package_data(&client, &package_name).unwrap();
         }
     }
 

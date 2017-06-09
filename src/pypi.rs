@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Package {
+#[derive(Deserialize, Debug)]
+pub struct PypiPackage {
     info: PackageInfo,
     releases: HashMap<String, Vec<ReleaseMetadata>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 struct PackageInfo {
     maintainer: Option<String>,
     docs_url: Option<String>,
@@ -16,7 +16,7 @@ struct PackageInfo {
     package_url: String,
     author: String,
     author_email: String,
-    download_url: String,
+    download_url: Option<String>,
     platform: String,
     version: String,
     description: String,
@@ -26,19 +26,19 @@ struct PackageInfo {
     classifiers: Vec<String>,
     name: String,
     bugtrack_url: Option<String>,
-    license: String,
+    license: Option<String>,
     summary: String,
     home_page: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 struct PackageDownloads {
     last_month: u64,
     last_week: u64,
     last_day: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 struct ReleaseMetadata {
     has_sig: bool,
     upload_time: String,
@@ -48,8 +48,22 @@ struct ReleaseMetadata {
     md5_digest: String,
     downloads: u64,
     filename: String,
-    packagetype: String,
+    packagetype: ReleaseType,
     path: String,
     size: u64,
+}
+
+#[derive(Deserialize, Debug)]
+enum ReleaseType {
+    #[serde(rename = "sdist")]
+    Sdist,
+    #[serde(rename = "bdist_dumb")]
+    BdistDumb,
+    #[serde(rename = "bdist_egg")]
+    BdistEgg,
+    #[serde(rename = "bdist_wheel")]
+    BdistWheel,
+    #[serde(rename = "bdist_wininst")]
+    BdistWininst,
 }
 
