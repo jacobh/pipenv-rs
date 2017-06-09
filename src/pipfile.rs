@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use serde_json;
 
 type RequiresMap = HashMap<String, String>;
 
@@ -43,7 +42,7 @@ fn git_editable_default() -> bool {
 pub struct Lockfile {
     default: HashMap<String, PackageInfo>,
     develop: HashMap<String, PackageInfo>,
-    _meta: HashMap<String, serde_json::Value>,
+    _meta: LockfileMeta,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
