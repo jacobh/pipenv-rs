@@ -72,7 +72,8 @@ struct ReleaseMetadata {
     md5_digest: String,
     downloads: u64,
     filename: String,
-    packagetype: ReleaseType,
+    #[serde(rename = "packagetype")]
+    package_type: ReleaseType,
     path: String,
     size: u64,
 }
