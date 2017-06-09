@@ -1,68 +1,25 @@
 use serde_json;
-use std::fmt;
-use std::marker::PhantomData;
-use serde::de::{Deserialize, Deserializer, Visitor, MapAccess};
+use std::collections::HashMap;
 
 type SerdeObject = serde_json::Map<String, serde_json::Value>;
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Package {
     info: SerdeObject,
-    releases: PackageReleases,
+    releases: HashMap<String, Vec<ReleaseMetadata>>,
 }
 
-#[derive(Debug)]
-struct PackageReleases(Vec<PackageRelease>);
-impl PackageReleases {
-    fn new() -> PackageReleases {
-        PackageReleases(vec![])
-    }
+#[derive(Serialize, Deserialize, Debug)]
+struct ReleaseMetadata {
+    has_sig: bool,
+    upload_time: String,
+    comment_text: String,
+    python_version: String,
+    url: String,
+    md5_digest: String,
+    downloads: u64,
+    filename: String,
+    packagetype: String,
+    path: String,
+    size: u64,
 }
-
-#[derive(Debug)]
-struct PackageRelease {
-    version: String,
-    release_variants: Vec<SerdeObject>,
-}
-
-// Reworked example from https://serde.rs/deserialize-map.html
-struct PackageReleaseMapVisitor {
-    marker: PhantomData<PackageReleases>,
-}
-
-impl PackageReleaseMapVisitor {
-    fn new() -> Self {
-        PackageReleaseMapVisitor { marker: PhantomData }
-    }
-}
-
-impl<'de> Visitor<'de> for PackageReleaseMapVisitor {
-    type Value = PackageReleases;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str(r#"{"1.2.3": {...}, "2.0.0": {...}}"#)
-    }
-
-    fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
-        where M: MapAccess<'de>
-    {
-        let mut releases = PackageReleases::new();
-        while let Some((key, value)) = access.next_entry()? {
-            releases.0.push(PackageRelease {
-                                version: key,
-                                release_variants: value,
-                            });
-        }
-
-        Ok(releases)
-    }
-}
-
-impl<'de> Deserialize<'de> for PackageReleases {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
-    {
-        deserializer.deserialize_map(PackageReleaseMapVisitor::new())
-    }
-}
-
