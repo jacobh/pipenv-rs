@@ -7,6 +7,7 @@ extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate toml;
+extern crate semver;
 
 use std::fs::File;
 use std::io::Read;
@@ -38,8 +39,8 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("info") {
         let package_name = matches.value_of("PACKAGE_NAME").unwrap();
-        let package_data = get_package_data(&client, &package_name);
-        println!("{:?}", package_data);
+        let package_data = get_package_data(&client, &package_name).unwrap();
+        println!("latest version: {:?}", package_data.latest_version());
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
         let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap()).unwrap();
@@ -47,9 +48,14 @@ fn main() {
         let pipfile_inst: pipfile::Pipfile = toml::from_slice(&pipfile_bytes)
             .expect("failed to parse Pipfile");
 
-        for (package_name, _) in pipfile_inst.packages {
-            println!("{}", package_name);
-            let _ = get_package_data(&client, &package_name).unwrap();
+        let package_data =
+            pipfile_inst
+                .packages
+                .keys()
+                .map(|package_name| get_package_data(&client, package_name).unwrap());
+        for package_datum in package_data {
+            println!("{}", package_datum.name());
+            println!("latest version: {:?}", package_datum.latest_version());
         }
     }
     if let Some(matches) = matches.subcommand_matches("validate-lockfile") {

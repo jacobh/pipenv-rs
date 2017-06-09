@@ -1,9 +1,26 @@
 use std::collections::HashMap;
+use semver;
 
 #[derive(Deserialize, Debug)]
 pub struct PypiPackage {
     info: PackageInfo,
     releases: HashMap<String, Vec<ReleaseMetadata>>,
+    urls: Vec<ReleaseMetadata>,
+}
+impl PypiPackage {
+    pub fn get_requires_for_version(&self, version: String) -> Option<Vec<String>> {
+        unimplemented!()
+    }
+    pub fn latest_version(&self) -> Option<String> {
+        self.releases
+            .keys()
+            .filter_map(|version| semver::Version::parse(&version).ok())
+            .max()
+            .map(|version| version.to_string())
+    }
+    pub fn name(&self) -> &str {
+        &self.info.name
+    }
 }
 
 #[derive(Deserialize, Debug)]
