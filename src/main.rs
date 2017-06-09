@@ -11,12 +11,15 @@ extern crate serde_json;
 extern crate toml;
 extern crate semver;
 extern crate regex;
+extern crate tar;
+extern crate flate2;
 
 use std::fs::File;
 use std::io::Read;
 
 mod pipfile;
 mod pypi;
+mod release_utils;
 mod semver_utils;
 
 fn get_package_data(client: &reqwest::Client,
@@ -45,6 +48,8 @@ fn main() {
         let package_name = matches.value_of("PACKAGE_NAME").unwrap();
         let package_data = get_package_data(&client, &package_name).unwrap();
         println!("latest version: {:?}", package_data.latest_version());
+        println!("{:?}",
+                 package_data.get_requires_for_version(&package_data.latest_version().unwrap()));
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
         let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap()).unwrap();

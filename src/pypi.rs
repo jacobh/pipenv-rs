@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use std::io::Read;
+use std::str;
 use semver;
 
+
+use release_utils::get_tar_archive;
 use semver_utils::normalize_version_string;
 
 #[derive(Deserialize, Debug)]
@@ -11,7 +15,29 @@ pub struct PypiPackage {
 }
 impl PypiPackage {
     pub fn get_requires_for_version(&self, version: &semver::Version) -> Option<Vec<String>> {
-        unimplemented!()
+        let sdist_release = self.releases()
+            .get(version)
+            .unwrap()
+            .iter()
+            .find(|release| release.package_type == ReleaseType::Sdist)
+            .unwrap();
+        let mut archive = get_tar_archive(&sdist_release.url);
+        for entry in archive.entries().unwrap() {
+            let mut entry = entry.unwrap();
+            if entry
+                   .path()
+                   .unwrap()
+                   .to_string_lossy()
+                   .ends_with(".egg-info/requires.txt") {
+                let requires_txt = {
+                    let mut data = String::new();
+                    entry.read_to_string(&mut data);
+                    data
+                };
+                return Some(requires_txt.split("\n").map(|x| x.to_owned()).collect());
+            }
+        }
+        None
     }
 
     pub fn releases(&self) -> HashMap<semver::Version, &Vec<ReleaseMetadata>> {
@@ -82,7 +108,7 @@ struct ReleaseMetadata {
     size: u64,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 enum ReleaseType {
     #[serde(rename = "sdist")]
     Sdist,
