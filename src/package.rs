@@ -48,12 +48,10 @@ impl<'de> Visitor<'de> for PackageReleaseMapVisitor {
     {
         let mut releases = PackageReleases::new();
         while let Some((key, value)) = access.next_entry()? {
-            releases
-                .0
-                .push(PackageRelease {
-                          version: key,
-                          release_variants: value,
-                      });
+            releases.0.push(PackageRelease {
+                                version: key,
+                                release_variants: value,
+                            });
         }
 
         Ok(releases)
@@ -67,3 +65,4 @@ impl<'de> Deserialize<'de> for PackageReleases {
         deserializer.deserialize_map(PackageReleaseMapVisitor::new())
     }
 }
+
