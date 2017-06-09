@@ -1,42 +1,60 @@
 use std::collections::HashMap;
 use serde_json;
 
+type RequiresMap = HashMap<String, String>;
+
 #[derive(Deserialize, Debug)]
 pub struct Pipfile {
     pub source: Vec<Source>,
-    pub requires: HashMap<String, String>,
+    pub requires: RequiresMap,
     pub packages: HashMap<String, PackageInfo>,
     #[serde(rename = "dev-packages")]
     pub dev_packages: Option<HashMap<String, PackageInfo>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Source {
     url: String,
     verify_ssl: bool,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum PackageInfo {
-    SemVer(String),
+    SimpleString(String),
+    Simple {
+        version: String,
+        hash: Option<String>,
+    },
     Git {
         git: String,
         #[serde(rename = "ref")]
         ref_: String,
-        #[serde(default = "package_info_git_editable_default")]
+        #[serde(default = "git_editable_default")]
         editable: bool,
     },
 }
 
-fn package_info_git_editable_default() -> bool {
+fn git_editable_default() -> bool {
     false
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Lockfile {
-    default: HashMap<String, serde_json::Value>,
-    develop: HashMap<String, serde_json::Value>,
+    default: HashMap<String, PackageInfo>,
+    develop: HashMap<String, PackageInfo>,
     _meta: HashMap<String, serde_json::Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct LockfileMeta {
+    hash: LockfileMetaHash,
+    requires: RequiresMap,
+    sources: Vec<Source>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct LockfileMetaHash {
+    sha256: String,
 }
 
