@@ -2,18 +2,22 @@
 extern crate serde_derive;
 #[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate lazy_static;
 
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate toml;
 extern crate semver;
+extern crate regex;
 
 use std::fs::File;
 use std::io::Read;
 
 mod pipfile;
 mod pypi;
+mod semver_utils;
 
 fn get_package_data(client: &reqwest::Client,
                     package_name: &str)
