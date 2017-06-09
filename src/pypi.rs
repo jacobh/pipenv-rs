@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use semver;
 
+use semver_utils::normalize_version_string;
+
 #[derive(Deserialize, Debug)]
 pub struct PypiPackage {
     info: PackageInfo,
@@ -11,12 +13,17 @@ impl PypiPackage {
     pub fn get_requires_for_version(&self, version: String) -> Option<Vec<String>> {
         unimplemented!()
     }
-    pub fn latest_version(&self) -> Option<String> {
+
+    pub fn versions(&self) -> Vec<semver::Version> {
         self.releases
             .keys()
+            .map(|v| normalize_version_string(v))
             .filter_map(|version| semver::Version::parse(&version).ok())
-            .max()
-            .map(|version| version.to_string())
+            .collect()
+    }
+
+    pub fn latest_version(&self) -> Option<semver::Version> {
+        self.versions().iter().max().map(|x| x.to_owned())
     }
     pub fn name(&self) -> &str {
         &self.info.name
