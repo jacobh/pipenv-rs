@@ -10,21 +10,25 @@ pub struct PypiPackage {
     urls: Vec<ReleaseMetadata>,
 }
 impl PypiPackage {
-    pub fn get_requires_for_version(&self, version: String) -> Option<Vec<String>> {
+    pub fn get_requires_for_version(&self, version: &semver::Version) -> Option<Vec<String>> {
         unimplemented!()
     }
 
-    pub fn versions(&self) -> Vec<semver::Version> {
+    pub fn releases(&self) -> HashMap<semver::Version, &Vec<ReleaseMetadata>> {
         self.releases
-            .keys()
-            .map(|v| normalize_version_string(v))
-            .filter_map(|version| semver::Version::parse(&version).ok())
+            .iter()
+            .filter_map(|(key, value)| {
+                            semver::Version::parse(&normalize_version_string(key))
+                                .map(|key| (key, value))
+                                .ok()
+                        })
             .collect()
     }
 
     pub fn latest_version(&self) -> Option<semver::Version> {
-        self.versions().iter().max().map(|x| x.to_owned())
+        self.releases().keys().max().map(|x| x.to_owned())
     }
+
     pub fn name(&self) -> &str {
         &self.info.name
     }
