@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::str;
 use semver;
-
+use reqwest;
+use flate2::read::GzDecoder;
+use tar::Archive;
 
 use release_utils::get_tar_archive;
 use semver_utils::normalize_version_string;
@@ -14,32 +16,17 @@ pub struct PypiPackage {
     urls: Vec<ReleaseMetadata>,
 }
 impl PypiPackage {
-    pub fn get_requires_for_version(&self, version: &semver::Version) -> Option<Vec<String>> {
+    pub fn get_requires_for_version(&self,
+                                    client: &reqwest::Client,
+                                    version: &semver::Version)
+                                    -> Option<Vec<String>> {
         let sdist_release = self.releases()
             .get(version)
             .unwrap()
             .iter()
             .find(|release| release.package_type == ReleaseType::Sdist)
             .unwrap();
-        let mut archive = get_tar_archive(&sdist_release.url);
-        for entry in archive.entries().unwrap() {
-            let mut entry = entry.unwrap();
-            if entry
-                   .path()
-                   .unwrap()
-                   .to_string_lossy()
-                   .ends_with(".egg-info/requires.txt") {
-                let requires_txt = {
-                    let mut data = String::new();
-                    entry
-                        .read_to_string(&mut data)
-                        .expect("failed to read requires.txt");
-                    data
-                };
-                return Some(requires_txt.split("\n").map(|x| x.to_owned()).collect());
-            }
-        }
-        None
+        sdist_release.get_requires(client)
     }
 
     pub fn releases(&self) -> HashMap<semver::Version, &Vec<ReleaseMetadata>> {
@@ -108,6 +95,38 @@ pub struct ReleaseMetadata {
     package_type: ReleaseType,
     path: String,
     size: u64,
+}
+impl ReleaseMetadata {
+    fn get_release_file(&self, client: &reqwest::Client) -> reqwest::Result<reqwest::Response> {
+        client.get(&self.url).send()
+    }
+    fn get_requires(&self, client: &reqwest::Client) -> Option<Vec<String>> {
+        let resp = self.get_release_file(client).unwrap();
+        match self.package_type {
+            ReleaseType::Sdist => {
+                let mut archive = Archive::new(GzDecoder::new(resp).unwrap());
+                for entry in archive.entries().unwrap() {
+                    let mut entry = entry.unwrap();
+                    if entry
+                           .path()
+                           .unwrap()
+                           .to_string_lossy()
+                           .ends_with(".egg-info/requires.txt") {
+                        let requires_txt = {
+                            let mut data = String::new();
+                            entry
+                                .read_to_string(&mut data)
+                                .expect("failed to read requires.txt");
+                            data
+                        };
+                        return Some(requires_txt.split("\n").map(|x| x.to_owned()).collect());
+                    }
+                }
+                None
+            }
+            _ => unimplemented!(),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

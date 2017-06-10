@@ -49,7 +49,8 @@ fn main() {
         let package_data = get_package_data(&client, &package_name).unwrap();
         println!("latest version: {:?}", package_data.latest_version());
         println!("{:?}",
-                 package_data.get_requires_for_version(&package_data.latest_version().unwrap()));
+                 package_data
+                     .get_requires_for_version(&client, &package_data.latest_version().unwrap()));
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
         let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap()).unwrap();
