@@ -31,7 +31,9 @@ impl PypiPackage {
                    .ends_with(".egg-info/requires.txt") {
                 let requires_txt = {
                     let mut data = String::new();
-                    entry.read_to_string(&mut data);
+                    entry
+                        .read_to_string(&mut data)
+                        .expect("failed to read requires.txt");
                     data
                 };
                 return Some(requires_txt.split("\n").map(|x| x.to_owned()).collect());
@@ -93,7 +95,7 @@ struct PackageDownloads {
 }
 
 #[derive(Deserialize, Debug)]
-struct ReleaseMetadata {
+pub struct ReleaseMetadata {
     has_sig: bool,
     upload_time: String,
     comment_text: String,
