@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::io::Read;
 use std::str;
 use semver;
 use reqwest;
@@ -25,9 +24,13 @@ impl PypiPackage {
             .get(version)
             .unwrap()
             .iter()
-            .find(|release| release.package_type == ReleaseType::Sdist)
-            .unwrap();
-        sdist_release.get_requires(client)
+            .filter(|release| release.path.ends_with(".gz"))
+            .find(|release| release.package_type == ReleaseType::Sdist);
+        match sdist_release {
+            Some(sdist_release) => sdist_release.get_requires(client),
+            None => None,
+        }
+
     }
 
     pub fn releases(&self) -> HashMap<semver::Version, &Vec<ReleaseMetadata>> {
