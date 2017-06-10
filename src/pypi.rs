@@ -64,7 +64,8 @@ struct PackageInfo {
     description: String,
     release_url: String,
     downloads: PackageDownloads,
-    requires_dist: Option<Vec<String>>,
+    #[serde(default)]
+    requires_dist: Vec<String>,
     classifiers: Vec<String>,
     name: String,
     bugtrack_url: Option<String>,
