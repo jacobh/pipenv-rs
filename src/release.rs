@@ -26,7 +26,7 @@ pub struct WheelMetadata {
     extras: Vec<String>,
     generator: String,
     license: Option<String>,
-    metadata_version: String,
+    metadata_version: WheelMetadataVersion,
     name: String,
     requires: Option<String>,
     #[serde(default)]
@@ -38,6 +38,13 @@ pub struct WheelMetadata {
     download_url: Option<String>,
     platform: Option<String>,
     provides: Option<String>,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Deserialize, Debug)]
+enum WheelMetadataVersion {
+    #[serde(rename = "2.0")]
+    V2_0,
 }
 
 #[derive(Deserialize, Debug)]
