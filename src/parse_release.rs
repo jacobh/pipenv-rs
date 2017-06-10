@@ -9,6 +9,25 @@ use serde_json;
 use version_req::PackageVersionReq;
 use release::{ReleaseType, WheelMetadata};
 
+fn get_wheel_metadata_from_archive_file<R>(mut file: R) -> Option<WheelMetadata>
+    where R: Read
+{
+    let mut archive = {
+        let mut bytes = vec![];
+        file.read_to_end(&mut bytes).unwrap();
+        ZipArchive::new(Cursor::new(bytes)).unwrap()
+    };
+    for i in 0..archive.len() {
+        let file = archive.by_index(i).unwrap();
+        if file.name().ends_with(".dist-info/metadata.json") {
+            println!("parsing {}", file.name());
+            let wheel_meta: WheelMetadata = serde_json::from_reader(file).unwrap();
+            Some(wheel_meta);
+        }
+    }
+    None
+}
+
 fn parse_requires_txt_line(line: &str) -> Option<PackageVersionReq> {
     lazy_static! {
         static ref PACKAGE_NAME_RE: Regex = Regex::new(r"\w+").unwrap();
@@ -30,25 +49,14 @@ fn parse_requires_txt(text: &str) -> Vec<PackageVersionReq> {
         .collect()
 }
 
-pub fn parse_release_requirements<R>(mut file: R,
+pub fn parse_release_requirements<R>(file: R,
                                      release_type: ReleaseType)
                                      -> Option<Vec<PackageVersionReq>>
     where R: Read
 {
     match release_type {
         ReleaseType::BdistWheel => {
-            let mut archive = {
-                let mut bytes = vec![];
-                file.read_to_end(&mut bytes).unwrap();
-                ZipArchive::new(Cursor::new(bytes)).unwrap()
-            };
-            for i in 0..archive.len() {
-                let file = archive.by_index(i).unwrap();
-                if file.name().ends_with(".dist-info/metadata.json") {
-                    println!("parsing {}", file.name());
-                    let wheel_meta: WheelMetadata = serde_json::from_reader(file).unwrap();
-                }
-            }
+            let wheel_meta = get_wheel_metadata_from_archive_file(file);
             None
         }
         ReleaseType::Sdist => {
