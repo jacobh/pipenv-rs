@@ -5,3 +5,6 @@
 Pipenv, implemented in Rust.
 
 WIP
+
+## References
+- https://svn.python.org/projects/sandbox/trunk/setuptools/doc/formats.txt
