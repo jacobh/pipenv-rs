@@ -3,10 +3,12 @@ use std::io::Read;
 use std::str;
 use semver;
 use reqwest;
-use flate2::read::GzDecoder;
-use tar::Archive;
 
+use parse_release::parse_release_requirements;
 use semver_utils::normalize_and_parse_version_string;
+use version_req::PackageVersionReq;
+
+use release::ReleaseType;
 
 #[derive(Deserialize, Debug)]
 pub struct PypiPackage {
@@ -18,7 +20,7 @@ impl PypiPackage {
     pub fn get_requires_for_version(&self,
                                     client: &reqwest::Client,
                                     version: &semver::Version)
-                                    -> Option<Vec<String>> {
+                                    -> Option<Vec<PackageVersionReq>> {
         let sdist_release = self.releases()
             .get(version)
             .unwrap()
@@ -95,46 +97,9 @@ impl ReleaseMetadata {
     fn get_release_file(&self, client: &reqwest::Client) -> reqwest::Result<reqwest::Response> {
         client.get(&self.url).send()
     }
-    fn get_requires(&self, client: &reqwest::Client) -> Option<Vec<String>> {
+    fn get_requires(&self, client: &reqwest::Client) -> Option<Vec<PackageVersionReq>> {
         let resp = self.get_release_file(client).unwrap();
-        match self.package_type {
-            ReleaseType::Sdist => {
-                let mut archive = Archive::new(GzDecoder::new(resp).unwrap());
-                for entry in archive.entries().unwrap() {
-                    let mut entry = entry.unwrap();
-                    if entry
-                           .path()
-                           .unwrap()
-                           .to_string_lossy()
-                           .ends_with(".egg-info/requires.txt") {
-                        let requires_txt = {
-                            let mut data = String::new();
-                            entry
-                                .read_to_string(&mut data)
-                                .expect("failed to read requires.txt");
-                            data
-                        };
-                        return Some(requires_txt.split("\n").map(|x| x.to_owned()).collect());
-                    }
-                }
-                None
-            }
-            _ => unimplemented!(),
-        }
+        parse_release_requirements(resp, self.package_type)
     }
-}
-
-#[derive(Deserialize, Debug, PartialEq)]
-enum ReleaseType {
-    #[serde(rename = "sdist")]
-    Sdist,
-    #[serde(rename = "bdist_dumb")]
-    BdistDumb,
-    #[serde(rename = "bdist_egg")]
-    BdistEgg,
-    #[serde(rename = "bdist_wheel")]
-    BdistWheel,
-    #[serde(rename = "bdist_wininst")]
-    BdistWininst,
 }
 
