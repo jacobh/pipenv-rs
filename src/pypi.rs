@@ -7,7 +7,7 @@ use flate2::read::GzDecoder;
 use tar::Archive;
 
 use release_utils::get_tar_archive;
-use semver_utils::normalize_version_string;
+use semver_utils::normalize_and_parse_version_string;
 
 #[derive(Deserialize, Debug)]
 pub struct PypiPackage {
@@ -32,11 +32,7 @@ impl PypiPackage {
     pub fn releases(&self) -> HashMap<semver::Version, &Vec<ReleaseMetadata>> {
         self.releases
             .iter()
-            .filter_map(|(key, value)| {
-                            semver::Version::parse(&normalize_version_string(key))
-                                .map(|key| (key, value))
-                                .ok()
-                        })
+            .map(|(key, value)| (normalize_and_parse_version_string(key), value))
             .collect()
     }
 

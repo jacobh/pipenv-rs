@@ -1,5 +1,6 @@
 use regex;
 use regex::Regex;
+use semver;
 
 fn match_to_int(capture: Option<regex::Match>) -> u16 {
     match capture {
@@ -11,7 +12,7 @@ fn match_to_int(capture: Option<regex::Match>) -> u16 {
     }
 }
 
-pub fn normalize_version_string(version: &str) -> String {
+fn normalize_version_string(version: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"^(\d+).?(\d+)?.?(\d+)?(.*)$").unwrap();
     }
@@ -23,6 +24,16 @@ pub fn normalize_version_string(version: &str) -> String {
     let patch: u16 = match_to_int(captures.get(3));
 
     format!("{}.{}.{}", maj, min, patch)
+}
+
+pub fn normalize_and_parse_version_string(version: &str) -> semver::Version {
+    match semver::Version::parse(version) {
+        Ok(version) => version,
+        Err(_) => {
+            semver::Version::parse(&normalize_version_string(version))
+                .expect("Normalized version strings should always parse correctly")
+        }
+    }
 }
 
 #[cfg(test)]
