@@ -2,6 +2,12 @@ name: pipenv
 version: "0.1"
 author: Jacob Haslehurst <jacob@haslehurst.net>
 about: pipenv, in Rust
+args:
+    - cwd:
+        long: cwd
+        help: Override current working directory
+        value_name: CWD
+        takes_value: true
 subcommands:
     - info:
         about: Displays info about a package
