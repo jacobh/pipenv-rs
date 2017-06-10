@@ -6,7 +6,6 @@ use reqwest;
 use flate2::read::GzDecoder;
 use tar::Archive;
 
-use release_utils::get_tar_archive;
 use semver_utils::normalize_and_parse_version_string;
 
 #[derive(Deserialize, Debug)]

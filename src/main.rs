@@ -19,7 +19,6 @@ use std::io::Read;
 
 mod pipfile;
 mod pypi;
-mod release_utils;
 mod semver_utils;
 
 fn get_package_data(client: &reqwest::Client,
