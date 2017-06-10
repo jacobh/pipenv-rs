@@ -20,14 +20,13 @@ impl PypiPackage {
                                     client: &reqwest::Client,
                                     version: &semver::Version)
                                     -> Option<Vec<PackageVersionReq>> {
-        let sdist_release = self.releases()
+        let bdist_release = self.releases()
             .get(version)
             .unwrap()
             .iter()
-            .filter(|release| release.path.ends_with(".gz"))
-            .find(|release| release.package_type == ReleaseType::Sdist);
-        match sdist_release {
-            Some(sdist_release) => sdist_release.get_requires(client),
+            .find(|release| release.package_type == ReleaseType::BdistWheel);
+        match bdist_release {
+            Some(bdist_release) => bdist_release.get_requires(client),
             None => None,
         }
 

@@ -1,11 +1,13 @@
 use regex::Regex;
-use std::io::Read;
+use std::io::{Read, Cursor};
 use flate2::read::GzDecoder;
-use tar::Archive;
+use tar::Archive as TarArchive;
+use zip::read::ZipArchive;
 use semver;
+use serde_json;
 
 use version_req::PackageVersionReq;
-use release::ReleaseType;
+use release::{ReleaseType, WheelMetadata};
 
 fn parse_requires_txt_line(line: &str) -> Option<PackageVersionReq> {
     lazy_static! {
@@ -28,14 +30,29 @@ fn parse_requires_txt(text: &str) -> Vec<PackageVersionReq> {
         .collect()
 }
 
-pub fn parse_release_requirements<R>(file: R,
+pub fn parse_release_requirements<R>(mut file: R,
                                      release_type: ReleaseType)
                                      -> Option<Vec<PackageVersionReq>>
     where R: Read
 {
     match release_type {
+        ReleaseType::BdistWheel => {
+            let mut archive = {
+                let mut bytes = vec![];
+                file.read_to_end(&mut bytes).unwrap();
+                ZipArchive::new(Cursor::new(bytes)).unwrap()
+            };
+            for i in 0..archive.len() {
+                let file = archive.by_index(i).unwrap();
+                if file.name().ends_with(".dist-info/metadata.json") {
+                    println!("parsing {}", file.name());
+                    let wheel_meta: WheelMetadata = serde_json::from_reader(file).unwrap();
+                }
+            }
+            None
+        }
         ReleaseType::Sdist => {
-            let mut archive = Archive::new(GzDecoder::new(file).unwrap());
+            let mut archive = TarArchive::new(GzDecoder::new(file).unwrap());
             for entry in archive.entries().unwrap() {
                 let mut entry = entry.unwrap();
                 if entry

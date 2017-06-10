@@ -14,6 +14,7 @@ extern crate regex;
 extern crate tar;
 extern crate flate2;
 extern crate rayon;
+extern crate zip;
 
 use std::fs::File;
 use std::io::{Read, Write, stdout};
