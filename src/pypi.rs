@@ -102,7 +102,7 @@ impl ReleaseMetadata {
     }
     fn get_requires(&self, client: &reqwest::Client) -> Option<Vec<PackageVersionReq>> {
         let resp = self.get_release_file(client).unwrap();
-        parse_release_requirements(resp, self.package_type)
+        Some(parse_release_requirements(resp, self.package_type).unwrap())
     }
 }
 
