@@ -1,9 +1,13 @@
+#![recursion_limit = "1024"]
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate error_chain;
 
 extern crate reqwest;
 extern crate serde;
@@ -26,6 +30,31 @@ mod parse_release;
 mod release;
 mod semver_utils;
 mod version_req;
+mod errors;
+
+use errors::*;
+
+fn main() {
+    if let Err(ref e) = run() {
+        use std::io::Write;
+        let stderr = &mut ::std::io::stderr();
+        let errmsg = "Error writing to stderr";
+
+        writeln!(stderr, "error: {}", e).expect(errmsg);
+
+        for e in e.iter().skip(1) {
+            writeln!(stderr, "caused by: {}", e).expect(errmsg);
+        }
+
+        // The backtrace is not always generated. Try to run this example
+        // with `RUST_BACKTRACE=1`.
+        if let Some(backtrace) = e.backtrace() {
+            writeln!(stderr, "backtrace: {:?}", backtrace).expect(errmsg);
+        }
+
+        ::std::process::exit(1);
+    }
+}
 
 fn get_package_data(client: &reqwest::Client,
                     package_name: &str)
@@ -44,7 +73,7 @@ fn get_file_path_bytes(path: &str) -> std::io::Result<Vec<u8>> {
     Ok(bytes)
 }
 
-fn main() {
+fn run() -> Result<()> {
     let yaml = load_yaml!("cli.yml");
     let matches = clap::App::from_yaml(yaml).get_matches();
     let client = reqwest::Client::new().unwrap();
@@ -86,5 +115,6 @@ fn main() {
             .expect("failed to parse Pipfile.lock");
         println!("ok");
     }
+    Ok(())
 }
 
