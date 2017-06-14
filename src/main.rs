@@ -96,16 +96,21 @@ fn run() -> Result<()> {
             .par_iter()
             .map(|(k, _)| k)
             .map(|package_name| get_package_data(&client, package_name).unwrap())
-            .for_each(|package_datum| {
-                let latest_version = package_datum.latest_version().unwrap();
-                let requires = package_datum.get_requires_for_version(&client, &latest_version);
+            .map(|package_datum| {
+                let latest_version = package_datum.latest_version()?;
+                let requires = package_datum
+                    .get_requires_for_version(&client, &latest_version)?;
 
                 let stdout_ = stdout();
                 let mut handle = stdout_.lock();
                 writeln!(handle, "{}", package_datum.name()).unwrap();
                 writeln!(handle, "latest version: {:?}", latest_version).unwrap();
                 writeln!(handle, "{:?}", requires).unwrap();
-            });
+
+                Ok(())
+            })
+            .reduce_with(|r1: Result<()>, r2: Result<()>| r1.and(r2).and(Ok(())))
+            .unwrap_or(Ok(()))?;
     }
     if let Some(matches) = matches.subcommand_matches("validate-lockfile") {
         let lockfile_bytes = get_file_path_bytes(matches.value_of("LOCKFILE_PATH").unwrap())?;

@@ -23,10 +23,16 @@ impl PypiPackage {
                                     -> Result<Vec<PackageVersionReq>> {
         let bdist_release = self.releases()?
             .get(version)
-            .ok_or_else(|| ErrorKind::VersionDoesntExist(version.clone()))?
+            .ok_or_else(|| {
+                            ErrorKind::VersionDoesntExist(self.info.name.to_owned(),
+                                                          version.clone())
+                        })?
             .iter()
             .find(|release| release.package_type == ReleaseType::BdistWheel)
-            .ok_or_else(|| ErrorKind::NoReleaseForVersion(version.clone()))?;
+            .ok_or_else(|| {
+                            ErrorKind::NoReleaseForVersion(self.info.name.to_owned(),
+                                                           version.clone())
+                        })?;
         bdist_release.get_requires(client)
     }
 

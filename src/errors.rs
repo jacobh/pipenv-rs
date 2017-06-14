@@ -22,13 +22,13 @@ error_chain!{
                 description("File not found in archive")
                 display("File not found in archive: `{}`", s)
             }
-            VersionDoesntExist(v: semver::Version) {
+            VersionDoesntExist(name: String, v: semver::Version) {
                 description("Version doesn't exist")
-                display("Version doesn't exist: {}", v)
+                display("Version doesn't exist: {}: {}", name, v)
             }
-            NoReleaseForVersion(v: semver::Version) {
+            NoReleaseForVersion(name: String, v: semver::Version) {
                 description("No release found for version")
-                display("No release found for version: {}", v)
+                display("No release found for version: {}: {}", name, v)
             }
             PackageHasNoReleasedVersions(s: String) {
                 description("Package has no released versions")
