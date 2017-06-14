@@ -8,6 +8,7 @@ use semver_utils::normalize_and_parse_version_string;
 use version_req::PackageVersionReq;
 
 use release::ReleaseType;
+use errors::*;
 
 #[derive(Deserialize, Debug)]
 pub struct PypiPackage {
@@ -19,28 +20,36 @@ impl PypiPackage {
     pub fn get_requires_for_version(&self,
                                     client: &reqwest::Client,
                                     version: &semver::Version)
-                                    -> Option<Vec<PackageVersionReq>> {
-        let bdist_release = self.releases()
+                                    -> Result<Vec<PackageVersionReq>> {
+        let bdist_release = self.releases()?
             .get(version)
-            .unwrap()
+            .ok_or_else(|| ErrorKind::VersionDoesntExist(version.clone()))?
             .iter()
-            .find(|release| release.package_type == ReleaseType::BdistWheel);
-        match bdist_release {
-            Some(bdist_release) => bdist_release.get_requires(client),
-            None => None,
-        }
-
+            .find(|release| release.package_type == ReleaseType::BdistWheel)
+            .ok_or_else(|| ErrorKind::NoReleaseForVersion(version.clone()))?;
+        bdist_release.get_requires(client)
     }
 
-    pub fn releases(&self) -> HashMap<semver::Version, &Vec<ReleaseMetadata>> {
+    pub fn releases(&self) -> Result<HashMap<semver::Version, &Vec<ReleaseMetadata>>> {
         self.releases
             .iter()
-            .map(|(key, value)| (normalize_and_parse_version_string(key), value))
+            .map(|(key, value)| {
+                     let key = normalize_and_parse_version_string(key)?;
+                     Ok((key, value))
+                 })
             .collect()
     }
 
-    pub fn latest_version(&self) -> Option<semver::Version> {
-        self.releases().keys().max().map(|x| x.to_owned())
+    pub fn latest_version(&self) -> Result<semver::Version> {
+        self.releases()
+            .chain_err(|| ErrorKind::PackageHasNoReleasedVersions(self.info.name.to_owned()))?
+            .keys()
+            .max()
+            .map(|x| x.to_owned())
+            .ok_or_else(|| {
+                            ErrorKind::PackageHasNoReleasedVersions(self.info.name.to_owned())
+                                .into()
+                        })
     }
 
     pub fn name(&self) -> &str {
@@ -97,12 +106,12 @@ pub struct ReleaseMetadata {
     size: u64,
 }
 impl ReleaseMetadata {
-    fn get_release_file(&self, client: &reqwest::Client) -> reqwest::Result<reqwest::Response> {
-        client.get(&self.url).send()
+    fn get_release_file(&self, client: &reqwest::Client) -> Result<reqwest::Response> {
+        Ok(client.get(&self.url).send()?)
     }
-    fn get_requires(&self, client: &reqwest::Client) -> Option<Vec<PackageVersionReq>> {
-        let resp = self.get_release_file(client).unwrap();
-        Some(parse_release_requirements(resp, self.package_type).unwrap())
+    fn get_requires(&self, client: &reqwest::Client) -> Result<Vec<PackageVersionReq>> {
+        let resp = self.get_release_file(client)?;
+        parse_release_requirements(resp, self.package_type)
     }
 }
 

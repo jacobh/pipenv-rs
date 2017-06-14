@@ -2,6 +2,8 @@ use regex;
 use regex::Regex;
 use semver;
 
+use errors::*;
+
 fn match_to_int(capture: Option<regex::Match>) -> u16 {
     match capture {
         Some(match_) => {
@@ -12,27 +14,25 @@ fn match_to_int(capture: Option<regex::Match>) -> u16 {
     }
 }
 
-fn normalize_version_string(version: &str) -> String {
+fn normalize_version_string(version: &str) -> Result<String> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"^(\d+).?(\d+)?.?(\d+)?(.*)$").unwrap();
     }
-    let captures = RE.captures(version)
-        .expect("All version strings should start with a number");
+    let captures =
+        RE.captures(version)
+            .ok_or_else(|| ErrorKind::NormalizeVersionStringRegexFailed(version.to_owned()))?;
 
     let maj: u16 = match_to_int(captures.get(1));
     let min: u16 = match_to_int(captures.get(2));
     let patch: u16 = match_to_int(captures.get(3));
 
-    format!("{}.{}.{}", maj, min, patch)
+    Ok(format!("{}.{}.{}", maj, min, patch))
 }
 
-pub fn normalize_and_parse_version_string(version: &str) -> semver::Version {
+pub fn normalize_and_parse_version_string(version: &str) -> Result<semver::Version> {
     match semver::Version::parse(version) {
-        Ok(version) => version,
-        Err(_) => {
-            semver::Version::parse(&normalize_version_string(version))
-                .expect("Normalized version strings should always parse correctly")
-        }
+        Ok(version) => Ok(version),
+        Err(_) => semver::Version::parse(&normalize_version_string(version)?).map_err(|e| e.into()),
     }
 }
 

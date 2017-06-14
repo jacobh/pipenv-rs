@@ -56,9 +56,7 @@ fn main() {
     }
 }
 
-fn get_package_data(client: &reqwest::Client,
-                    package_name: &str)
-                    -> reqwest::Result<pypi::PypiPackage> {
+fn get_package_data(client: &reqwest::Client, package_name: &str) -> Result<pypi::PypiPackage> {
 
     let mut resp = client
         .get(&format!("https://pypi.python.org/pypi/{}/json", package_name))
@@ -66,7 +64,7 @@ fn get_package_data(client: &reqwest::Client,
     Ok(resp.json()?)
 }
 
-fn get_file_path_bytes(path: &str) -> std::io::Result<Vec<u8>> {
+fn get_file_path_bytes(path: &str) -> Result<Vec<u8>> {
     let mut bytes = vec![];
     let mut file = File::open(path)?;
     file.read_to_end(&mut bytes)?;
@@ -80,17 +78,18 @@ fn run() -> Result<()> {
 
     if let Some(matches) = matches.subcommand_matches("info") {
         let package_name = matches.value_of("PACKAGE_NAME").unwrap();
-        let package_data = get_package_data(&client, &package_name).unwrap();
-        println!("latest version: {:?}", package_data.latest_version());
+        let package_data = get_package_data(&client, &package_name)?;
+        let latest_version = package_data.latest_version()?;
+        println!("latest version: {:?}", latest_version);
         println!("{:?}",
                  package_data
-                     .get_requires_for_version(&client, &package_data.latest_version().unwrap()));
+                     .get_requires_for_version(&client, &latest_version)?);
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
-        let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap()).unwrap();
+        let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap())?;
 
         let pipfile_inst: pipfile::Pipfile = toml::from_slice(&pipfile_bytes)
-            .expect("failed to parse Pipfile");
+            .chain_err(|| "failed to parse Pipfile")?;
 
         pipfile_inst
             .packages
@@ -109,10 +108,9 @@ fn run() -> Result<()> {
             });
     }
     if let Some(matches) = matches.subcommand_matches("validate-lockfile") {
-        let lockfile_bytes = get_file_path_bytes(matches.value_of("LOCKFILE_PATH").unwrap())
-            .unwrap();
+        let lockfile_bytes = get_file_path_bytes(matches.value_of("LOCKFILE_PATH").unwrap())?;
         let _: pipfile::Lockfile = serde_json::from_slice(&lockfile_bytes)
-            .expect("failed to parse Pipfile.lock");
+            .chain_err(|| "failed to parse Pipfile.lock")?;
         println!("ok");
     }
     Ok(())
