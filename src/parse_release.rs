@@ -103,29 +103,28 @@ mod tests {
     fn parse_simple_requires_txt_line() {
         let requires_txt_line = "chardet<3.1.0";
 
-        let version_req = parse_requires_txt_line(requires_txt_line);
+        let version_req = parse_requires_txt_line(requires_txt_line).unwrap();
 
-        assert_eq!(version_req,
-                   Some(make_version_req("chardet", vec!["< 3.1.0"])));
+        assert_eq!(version_req, make_version_req("chardet", vec!["< 3.1.0"]));
     }
 
     #[test]
     fn parse_requires_txt_range() {
         let requires_txt_line = "chardet>=3.0.2,<3.1.0";
 
-        let version_req = parse_requires_txt_line(requires_txt_line);
+        let version_req = parse_requires_txt_line(requires_txt_line).unwrap();
 
         assert_eq!(version_req,
-                   Some(make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"])));
+                   make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"]));
     }
 
     #[test]
     fn parse_major_only() {
         let requires_txt_line = "django<2";
 
-        let version_req = parse_requires_txt_line(requires_txt_line);
+        let version_req = parse_requires_txt_line(requires_txt_line).unwrap();
 
-        assert_eq!(version_req, Some(make_version_req("django", vec!["< 2"])));
+        assert_eq!(version_req, make_version_req("django", vec!["< 2"]));
     }
 
     #[test]
@@ -138,7 +137,7 @@ certifi>=2017.4.17
 [security]
 pyOpenSSL>=0.14";
 
-        let version_reqs = parse_requires_txt(requires_txt);
+        let version_reqs = parse_requires_txt(requires_txt).unwrap();
 
         assert_eq!(version_reqs,
                    vec![make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"]),

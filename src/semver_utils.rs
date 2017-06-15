@@ -44,7 +44,7 @@ mod tests {
     fn fix_leading_zero() {
         let version = "1.01.0";
 
-        let fixed = normalize_version_string(version);
+        let fixed = normalize_version_string(version).unwrap();
 
         assert_eq!(fixed, "1.1.0");
     }
@@ -53,7 +53,7 @@ mod tests {
     fn fix_missing_patch() {
         let version = "3.2";
 
-        let fixed = normalize_version_string(version);
+        let fixed = normalize_version_string(version).unwrap();
 
         assert_eq!(fixed, "3.2.0");
     }
@@ -62,7 +62,7 @@ mod tests {
     fn fix_missing_minor() {
         let version = "5";
 
-        let fixed = normalize_version_string(version);
+        let fixed = normalize_version_string(version).unwrap();
 
         assert_eq!(fixed, "5.0.0");
     }
