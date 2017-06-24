@@ -32,7 +32,7 @@ fn parse_requires_txt(text: &str) -> Result<Vec<PackageVersionReq>> {
     text.split("\n")
         .filter(|line| line != &"")
         .take_while(|line| !line.starts_with("["))
-        .map(|line| PackageVersionReq::parse_requires_txt_line(line))
+        .map(|line| PackageVersionReq::parse_requirement(line))
         .collect()
 }
 
@@ -44,7 +44,7 @@ pub fn parse_release_requirements<R>(file: R,
     match release_type {
         ReleaseType::BdistWheel => {
             let wheel_meta = get_wheel_metadata_from_archive_file(file)?;
-            Ok(wheel_meta.to_version_reqs())
+            wheel_meta.to_version_reqs()
         }
         ReleaseType::Sdist => {
             let mut archive = TarArchive::new(GzDecoder::new(file)?);
