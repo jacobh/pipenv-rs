@@ -1,10 +1,8 @@
-use regex::Regex;
 use std::io;
 use std::io::Read;
 use flate2::read::GzDecoder;
 use tar::Archive as TarArchive;
 use zip::read::ZipArchive;
-use semver;
 use serde_json;
 
 use version_req::PackageVersionReq;
@@ -30,28 +28,11 @@ fn get_wheel_metadata_from_archive_file<R>(mut file: R) -> Result<WheelMetadata>
     bail!(ErrorKind::ArchiveFileNotFound(".dist-info/metadata.json".to_owned()));
 }
 
-fn parse_requires_txt_line(line: &str) -> Result<PackageVersionReq> {
-    lazy_static! {
-        static ref PACKAGE_NAME_RE: Regex = Regex::new(r"\w+").unwrap();
-        static ref VERSION_REQ_RE: Regex = Regex::new(r"[<=>]{1,2}\d+(\.\d+){0,2}").unwrap();
-    }
-    let package_name = PACKAGE_NAME_RE
-        .find(line)
-        .ok_or_else(|| ErrorKind::PackageNameRegexFailed(line.to_owned()))?
-        .as_str()
-        .to_owned();
-    let version_reqs: Result<Vec<semver::VersionReq>> = VERSION_REQ_RE
-        .find_iter(line)
-        .map(|x| semver::VersionReq::parse(x.as_str()).map_err(|e| e.into()))
-        .collect();
-    Ok(PackageVersionReq::new(package_name, version_reqs?))
-}
-
 fn parse_requires_txt(text: &str) -> Result<Vec<PackageVersionReq>> {
     text.split("\n")
         .filter(|line| line != &"")
         .take_while(|line| !line.starts_with("["))
-        .map(|line| parse_requires_txt_line(line))
+        .map(|line| PackageVersionReq::parse_requires_txt_line(line))
         .collect()
 }
 
@@ -89,6 +70,7 @@ pub fn parse_release_requirements<R>(file: R,
 
 #[cfg(test)]
 mod tests {
+    use semver;
     use parse_release::*;
 
     fn make_version_req(name: &str, reqs: Vec<&str>) -> PackageVersionReq {
@@ -97,34 +79,6 @@ mod tests {
                                    .map(|s| semver::VersionReq::parse(s).unwrap())
                                    .collect())
 
-    }
-
-    #[test]
-    fn parse_simple_requires_txt_line() {
-        let requires_txt_line = "chardet<3.1.0";
-
-        let version_req = parse_requires_txt_line(requires_txt_line).unwrap();
-
-        assert_eq!(version_req, make_version_req("chardet", vec!["< 3.1.0"]));
-    }
-
-    #[test]
-    fn parse_requires_txt_range() {
-        let requires_txt_line = "chardet>=3.0.2,<3.1.0";
-
-        let version_req = parse_requires_txt_line(requires_txt_line).unwrap();
-
-        assert_eq!(version_req,
-                   make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"]));
-    }
-
-    #[test]
-    fn parse_major_only() {
-        let requires_txt_line = "django<2";
-
-        let version_req = parse_requires_txt_line(requires_txt_line).unwrap();
-
-        assert_eq!(version_req, make_version_req("django", vec!["< 2"]));
     }
 
     #[test]
