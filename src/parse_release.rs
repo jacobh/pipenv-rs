@@ -62,8 +62,8 @@ pub fn parse_release_requirements<R>(file: R,
 {
     match release_type {
         ReleaseType::BdistWheel => {
-            let _ = get_wheel_metadata_from_archive_file(file)?;
-            Ok(vec![])
+            let wheel_meta = get_wheel_metadata_from_archive_file(file)?;
+            Ok(wheel_meta.to_version_reqs())
         }
         ReleaseType::Sdist => {
             let mut archive = TarArchive::new(GzDecoder::new(file)?);

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use serde_json;
 
+use version_req::PackageVersionReq;
+
 #[derive(Deserialize, Debug, PartialEq, Clone, Copy)]
 pub enum ReleaseType {
     #[serde(rename = "sdist")]
@@ -38,6 +40,15 @@ pub struct WheelMetadata {
     download_url: Option<String>,
     platform: Option<String>,
     provides: Option<String>,
+}
+impl WheelMetadata {
+    pub fn to_version_reqs(&self) -> Vec<PackageVersionReq> {
+        self.run_requires
+        .iter()
+        .filter(|requires_group| requires_group.extra == None && requires_group.environment == None)
+        .flat_map(|group| group.requires.iter().map(|requirement| PackageVersionReq::new(requirement.clone(), vec!())))
+        .collect()
+    }
 }
 
 #[allow(non_camel_case_types)]
