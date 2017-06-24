@@ -59,7 +59,10 @@ fn main() {
 fn get_package_data(client: &reqwest::Client, package_name: &str) -> Result<pypi::PypiPackage> {
 
     let mut resp = client
-        .get(&format!("https://pypi.python.org/pypi/{}/json", package_name))
+        .get(&format!(
+            "https://pypi.python.org/pypi/{}/json",
+            package_name
+        ))
         .send()?;
     Ok(resp.json()?)
 }
@@ -81,9 +84,11 @@ fn run() -> Result<()> {
         let package_data = get_package_data(&client, &package_name)?;
         let latest_version = package_data.latest_version()?;
         println!("latest version: {:?}", latest_version);
-        println!("{:?}",
-                 package_data
-                     .get_requires_for_version(&client, &latest_version)?);
+        println!(
+            "{:?}",
+            package_data
+                .get_requires_for_version(&client, &latest_version)?
+        );
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
         let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap())?;
@@ -95,7 +100,9 @@ fn run() -> Result<()> {
             .packages
             .par_iter()
             .map(|(k, _)| k)
-            .map(|package_name| get_package_data(&client, package_name).unwrap())
+            .map(|package_name| {
+                get_package_data(&client, package_name).unwrap()
+            })
             .map(|package_datum| {
                 let latest_version = package_datum.latest_version()?;
                 let requires = package_datum
@@ -120,4 +127,3 @@ fn run() -> Result<()> {
     }
     Ok(())
 }
-

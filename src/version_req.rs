@@ -28,21 +28,25 @@ impl PackageVersionReq {
             .to_owned();
         let version_reqs: Result<Vec<semver::VersionReq>> = VERSION_REQ_RE
             .find_iter(req_str)
-            .map(|x| semver::VersionReq::parse(x.as_str()).map_err(|e| e.into()))
+            .map(|x| {
+                semver::VersionReq::parse(x.as_str()).map_err(|e| e.into())
+            })
             .collect();
         Ok(Self::new(package_name, version_reqs?))
     }
 }
 impl fmt::Debug for PackageVersionReq {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{} ({})",
-               self.package_name,
-               self.version_reqs
-                   .iter()
-                   .map(|x| x.to_string())
-                   .collect::<Vec<String>>()
-                   .join(", "))
+        write!(
+            f,
+            "{} ({})",
+            self.package_name,
+            self.version_reqs
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
     }
 }
 
@@ -51,10 +55,12 @@ mod tests {
     use version_req::*;
 
     fn make_version_req(name: &str, reqs: Vec<&str>) -> PackageVersionReq {
-        PackageVersionReq::new(name.to_owned(),
-                               reqs.iter()
-                                   .map(|s| semver::VersionReq::parse(s).unwrap())
-                                   .collect())
+        PackageVersionReq::new(
+            name.to_owned(),
+            reqs.iter()
+                .map(|s| semver::VersionReq::parse(s).unwrap())
+                .collect(),
+        )
 
     }
 
@@ -73,8 +79,10 @@ mod tests {
 
         let version_req = PackageVersionReq::parse_requirement(requires_txt_line).unwrap();
 
-        assert_eq!(version_req,
-                   make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"]));
+        assert_eq!(
+            version_req,
+            make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"])
+        );
     }
 
     #[test]
@@ -86,4 +94,3 @@ mod tests {
         assert_eq!(version_req, make_version_req("django", vec!["< 2"]));
     }
 }
-

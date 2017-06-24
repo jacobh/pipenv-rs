@@ -10,7 +10,8 @@ use release::{ReleaseType, WheelMetadata};
 use errors::*;
 
 fn get_wheel_metadata_from_archive_file<R>(mut file: R) -> Result<WheelMetadata>
-    where R: io::Read
+where
+    R: io::Read,
 {
     let mut archive = {
         let mut bytes = vec![];
@@ -25,7 +26,9 @@ fn get_wheel_metadata_from_archive_file<R>(mut file: R) -> Result<WheelMetadata>
             return Ok(wheel_meta);
         }
     }
-    bail!(ErrorKind::ArchiveFileNotFound(".dist-info/metadata.json".to_owned()));
+    bail!(ErrorKind::ArchiveFileNotFound(
+        ".dist-info/metadata.json".to_owned()
+    ));
 }
 
 fn parse_requires_txt(text: &str) -> Result<Vec<PackageVersionReq>> {
@@ -36,10 +39,12 @@ fn parse_requires_txt(text: &str) -> Result<Vec<PackageVersionReq>> {
         .collect()
 }
 
-pub fn parse_release_requirements<R>(file: R,
-                                     release_type: ReleaseType)
-                                     -> Result<Vec<PackageVersionReq>>
-    where R: io::Read
+pub fn parse_release_requirements<R>(
+    file: R,
+    release_type: ReleaseType,
+) -> Result<Vec<PackageVersionReq>>
+where
+    R: io::Read,
 {
     match release_type {
         ReleaseType::BdistWheel => {
@@ -51,9 +56,10 @@ pub fn parse_release_requirements<R>(file: R,
             for entry in archive.entries()? {
                 let mut entry = entry?;
                 if entry
-                       .path()?
-                       .to_string_lossy()
-                       .ends_with(".egg-info/requires.txt") {
+                    .path()?
+                    .to_string_lossy()
+                    .ends_with(".egg-info/requires.txt")
+                {
                     let requires_txt = {
                         let mut data = String::new();
                         entry.read_to_string(&mut data)?;
@@ -62,7 +68,9 @@ pub fn parse_release_requirements<R>(file: R,
                     return Ok(parse_requires_txt(&requires_txt)?);
                 }
             }
-            bail!(ErrorKind::ArchiveFileNotFound(".egg-info/requires.txt".to_owned()));
+            bail!(ErrorKind::ArchiveFileNotFound(
+                ".egg-info/requires.txt".to_owned()
+            ));
         }
         _ => unimplemented!(),
     }
@@ -74,10 +82,12 @@ mod tests {
     use parse_release::*;
 
     fn make_version_req(name: &str, reqs: Vec<&str>) -> PackageVersionReq {
-        PackageVersionReq::new(name.to_owned(),
-                               reqs.iter()
-                                   .map(|s| semver::VersionReq::parse(s).unwrap())
-                                   .collect())
+        PackageVersionReq::new(
+            name.to_owned(),
+            reqs.iter()
+                .map(|s| semver::VersionReq::parse(s).unwrap())
+                .collect(),
+        )
 
     }
 
@@ -93,11 +103,14 @@ pyOpenSSL>=0.14";
 
         let version_reqs = parse_requires_txt(requires_txt).unwrap();
 
-        assert_eq!(version_reqs,
-                   vec![make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"]),
-                        make_version_req("idna", vec![">= 2.5", "< 2.6"]),
-                        make_version_req("urllib3", vec![">= 1.21.1", "< 1.22"]),
-                        make_version_req("certifi", vec![">= 2017.4.17"])])
+        assert_eq!(
+            version_reqs,
+            vec![
+                make_version_req("chardet", vec![">= 3.0.2", "< 3.1.0"]),
+                make_version_req("idna", vec![">= 2.5", "< 2.6"]),
+                make_version_req("urllib3", vec![">= 1.21.1", "< 1.22"]),
+                make_version_req("certifi", vec![">= 2017.4.17"]),
+            ]
+        )
     }
 }
-

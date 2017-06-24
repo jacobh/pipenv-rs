@@ -45,10 +45,16 @@ pub struct WheelMetadata {
 impl WheelMetadata {
     pub fn to_version_reqs(&self) -> Result<Vec<PackageVersionReq>> {
         self.run_requires
-        .iter()
-        .filter(|requires_group| requires_group.extra == None && requires_group.environment == None)
-        .flat_map(|group| group.requires.iter().map(|requirement| PackageVersionReq::parse_requirement(requirement)))
-        .collect()
+            .iter()
+            .filter(|requires_group| {
+                requires_group.extra == None && requires_group.environment == None
+            })
+            .flat_map(|group| {
+                group.requires.iter().map(|requirement| {
+                    PackageVersionReq::parse_requirement(requirement)
+                })
+            })
+            .collect()
     }
 }
 
@@ -65,4 +71,3 @@ pub struct WheelRequiresGroup {
     environment: Option<String>,
     requires: Vec<String>,
 }
-

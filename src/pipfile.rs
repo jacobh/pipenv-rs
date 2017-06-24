@@ -56,4 +56,3 @@ struct LockfileMeta {
 struct LockfileMetaHash {
     sha256: String,
 }
-
