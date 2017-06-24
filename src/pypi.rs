@@ -17,23 +17,37 @@ pub struct PypiPackage {
     urls: Vec<ReleaseMetadata>,
 }
 impl PypiPackage {
-    pub fn get_requires_for_version(&self,
-                                    client: &reqwest::Client,
-                                    version: &semver::Version)
-                                    -> Result<Vec<PackageVersionReq>> {
-        let bdist_release = self.releases()?
+    fn get_requires_for_version_and_release_type(&self,
+                                                 client: &reqwest::Client,
+                                                 version: &semver::Version,
+                                                 release_type: ReleaseType)
+                                                 -> Result<Vec<PackageVersionReq>> {
+        let release = self.releases()?
             .get(version)
             .ok_or_else(|| {
                             ErrorKind::VersionDoesntExist(self.info.name.to_owned(),
                                                           version.clone())
                         })?
             .iter()
-            .find(|release| release.package_type == ReleaseType::BdistWheel)
+            .find(|release| release.package_type == release_type)
             .ok_or_else(|| {
                             ErrorKind::NoReleaseForVersion(self.info.name.to_owned(),
                                                            version.clone())
                         })?;
-        bdist_release.get_requires(client)
+        release.get_requires(client)
+    }
+    pub fn get_requires_for_version(&self,
+                                    client: &reqwest::Client,
+                                    version: &semver::Version)
+                                    -> Result<Vec<PackageVersionReq>> {
+        for release_type in [ReleaseType::BdistWheel, ReleaseType::Sdist].iter() {
+            let release =
+                self.get_requires_for_version_and_release_type(client, version, *release_type);
+            if release.is_ok() {
+                return release;
+            }
+        }
+        Err(ErrorKind::NoReleaseForVersion(self.info.name.to_owned(), version.clone()).into())
     }
 
     pub fn releases(&self) -> Result<HashMap<semver::Version, &Vec<ReleaseMetadata>>> {
