@@ -77,7 +77,7 @@ fn get_file_path_bytes(path: &str) -> Result<Vec<u8>> {
 fn run() -> Result<()> {
     let yaml = load_yaml!("cli.yml");
     let matches = clap::App::from_yaml(yaml).get_matches();
-    let client = reqwest::Client::new().unwrap();
+    let client = reqwest::Client::new();
 
     if let Some(matches) = matches.subcommand_matches("info") {
         let package_name = matches.value_of("PACKAGE_NAME").unwrap();
