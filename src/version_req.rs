@@ -61,7 +61,6 @@ mod tests {
                 .map(|s| semver::VersionReq::parse(s).unwrap())
                 .collect(),
         )
-
     }
 
     #[test]

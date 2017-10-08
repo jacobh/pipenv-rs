@@ -18,10 +18,9 @@ fn normalize_version_string(version: &str) -> Result<String> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"^(\d+).?(\d+)?.?(\d+)?(.*)$").unwrap();
     }
-    let captures = RE.captures(version)
-        .ok_or_else(|| {
-            ErrorKind::NormalizeVersionStringRegexFailed(version.to_owned())
-        })?;
+    let captures = RE.captures(version).ok_or_else(|| {
+        ErrorKind::NormalizeVersionStringRegexFailed(version.to_owned())
+    })?;
 
     let maj: u16 = match_to_int(captures.get(1));
     let min: u16 = match_to_int(captures.get(2));

@@ -47,9 +47,7 @@ impl PypiPackage {
                 return release;
             }
         }
-        Err(
-            ErrorKind::NoReleaseForVersion(self.info.name.to_owned(), version.clone()).into(),
-        )
+        Err(ErrorKind::NoReleaseForVersion(self.info.name.to_owned(), version.clone()).into())
     }
 
     pub fn releases(&self) -> Result<HashMap<semver::Version, &Vec<ReleaseMetadata>>> {
@@ -96,8 +94,7 @@ struct PackageInfo {
     description: String,
     release_url: String,
     downloads: PackageDownloads,
-    #[serde(default)]
-    requires_dist: Vec<String>,
+    #[serde(default)] requires_dist: Vec<String>,
     classifiers: Vec<String>,
     name: String,
     bugtrack_url: Option<String>,
@@ -123,8 +120,7 @@ pub struct ReleaseMetadata {
     md5_digest: String,
     downloads: u64,
     filename: String,
-    #[serde(rename = "packagetype")]
-    package_type: ReleaseType,
+    #[serde(rename = "packagetype")] package_type: ReleaseType,
     path: String,
     size: u64,
 }

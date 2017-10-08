@@ -1,27 +1,27 @@
 #![recursion_limit = "1024"]
 
 #[macro_use]
-extern crate serde_derive;
-#[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate error_chain;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate error_chain;
+extern crate serde_derive;
 
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-extern crate toml;
-extern crate semver;
-extern crate regex;
-extern crate tar;
 extern crate flate2;
 extern crate rayon;
+extern crate regex;
+extern crate reqwest;
+extern crate semver;
+extern crate serde;
+extern crate serde_json;
+extern crate tar;
+extern crate toml;
 extern crate zip;
 
 use std::fs::File;
-use std::io::{Read, Write, stdout};
+use std::io::{stdout, Read, Write};
 use rayon::prelude::*;
 
 mod pipfile;
@@ -57,7 +57,6 @@ fn main() {
 }
 
 fn get_package_data(client: &reqwest::Client, package_name: &str) -> Result<pypi::PypiPackage> {
-
     let mut resp = client
         .get(&format!(
             "https://pypi.python.org/pypi/{}/json",
@@ -86,15 +85,14 @@ fn run() -> Result<()> {
         println!("latest version: {:?}", latest_version);
         println!(
             "{:?}",
-            package_data
-                .get_requires_for_version(&client, &latest_version)?
+            package_data.get_requires_for_version(&client, &latest_version)?
         );
     }
     if let Some(matches) = matches.subcommand_matches("pipfile-info") {
         let pipfile_bytes = get_file_path_bytes(matches.value_of("PIPFILE_PATH").unwrap())?;
 
-        let pipfile_inst: pipfile::Pipfile = toml::from_slice(&pipfile_bytes)
-            .chain_err(|| "failed to parse Pipfile")?;
+        let pipfile_inst: pipfile::Pipfile =
+            toml::from_slice(&pipfile_bytes).chain_err(|| "failed to parse Pipfile")?;
 
         pipfile_inst
             .packages
@@ -105,8 +103,7 @@ fn run() -> Result<()> {
             })
             .map(|package_datum| {
                 let latest_version = package_datum.latest_version()?;
-                let requires = package_datum
-                    .get_requires_for_version(&client, &latest_version)?;
+                let requires = package_datum.get_requires_for_version(&client, &latest_version)?;
 
                 let stdout_ = stdout();
                 let mut handle = stdout_.lock();
@@ -121,8 +118,8 @@ fn run() -> Result<()> {
     }
     if let Some(matches) = matches.subcommand_matches("validate-lockfile") {
         let lockfile_bytes = get_file_path_bytes(matches.value_of("LOCKFILE_PATH").unwrap())?;
-        let _: pipfile::Lockfile = serde_json::from_slice(&lockfile_bytes)
-            .chain_err(|| "failed to parse Pipfile.lock")?;
+        let _: pipfile::Lockfile =
+            serde_json::from_slice(&lockfile_bytes).chain_err(|| "failed to parse Pipfile.lock")?;
         println!("ok");
     }
     Ok(())

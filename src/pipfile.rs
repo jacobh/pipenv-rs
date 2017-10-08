@@ -7,8 +7,7 @@ pub struct Pipfile {
     pub source: Vec<Source>,
     pub requires: RequiresMap,
     pub packages: HashMap<String, PackageInfo>,
-    #[serde(rename = "dev-packages")]
-    pub dev_packages: Option<HashMap<String, PackageInfo>>,
+    #[serde(rename = "dev-packages")] pub dev_packages: Option<HashMap<String, PackageInfo>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -27,10 +26,8 @@ pub enum PackageInfo {
     },
     Git {
         git: String,
-        #[serde(rename = "ref")]
-        ref_: String,
-        #[serde(default = "git_editable_default")]
-        editable: bool,
+        #[serde(rename = "ref")] ref_: String,
+        #[serde(default = "git_editable_default")] editable: bool,
     },
 }
 
